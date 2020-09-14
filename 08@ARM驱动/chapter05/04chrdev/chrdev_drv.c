@@ -10,15 +10,16 @@ MODULE_LICENSE("GPL");
 
 #define DEVICE_NAME "chrdev_drv"
 int major = 0;
-dev_t dev_nr = 0;
 
 static int chrdev_open(struct inode* pinode, struct file* pfile) {
     printk("%s\n", __FUNCTION__);
+    gpio_set_value(S5PV210_GPC1(3), 1);
     return 0;
 }
 
 static int chrdev_release(struct inode* pinode, struct file* pfile) {
     printk("%s\n", __FUNCTION__);
+    gpio_set_value(S5PV210_GPC1(3), 0);
     return 0;
 }
 
@@ -66,12 +67,17 @@ static int __init chrdev_init(void) {
         printk("register_chrdev_region err\n"); 
         return ret;
     }
+    gpio_request(S5PV210_GPC1(3), "LED1");
+
+    gpio_direction_output(S5PV210_GPC1(3), 0);
 
     return 0;
 }
 
 static void __exit chrdev_exit(void) {
     printk("%s\n", __FUNCTION__);
+    gpio_direction_output(S5PV210_GPC1(3), 0);
+    gpio_free(S5PV210_GPC1(3));
     cdev_del(&my_cdev);
 
     unregister_chrdev_region(MKDEV(major, 0),1);
